@@ -46,42 +46,75 @@ function normalize(results) {
 }
 
 export const handler = async (event) => {
-  let browser; // Déclaration de browser en dehors des blocs try/catch
+  let browser;
   try {
     if (event.httpMethod !== "POST") {
       return { statusCode: 405, body: "Method Not Allowed" };
     }
-    const { url, timeoutMs = 25000 } = JSON.parse(event.body || "{}");
+    
+    const { url, timeoutMs = 8000 } = JSON.parse(event.body || "{}");
     if (!url) return { statusCode: 400, body: "Missing URL" };
 
+    console.log(`🚀 Starting audit for: ${url}`);
+    
     const puppeteer = await getPuppeteer();
-    browser = await puppeteer.launch();
+    
+    // Options optimisées pour Netlify
+    const launchOptions = process.env.NETLIFY === "true" ? {
+      args: [
+        ...chromium.args,
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--single-process',
+        '--no-zygote'
+      ],
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+    } : {};
 
-    // Important: on passe le navigateur existant à Pa11y pour Lambda
+    browser = await puppeteer.launch(launchOptions);
+    console.log('✅ Browser launched successfully');
+
+    // Pa11y avec timeout réduit pour Netlify
     const results = await pa11y(url, {
       standard: "WCAG2AA",
       includeNotices: true,
       includeWarnings: true,
-      timeout: timeoutMs,         // garde < 26s sur Netlify Pro / < 10s Free
-      browser,                    // utilise l'instance Puppeteer fournie
-      // runner: 'axe' // (option) si tu veux axe-core derrière Pa11y
+      timeout: timeoutMs,
+      browser,
+      chromeLaunchConfig: {
+        ignoreHTTPSErrors: true
+      },
+      // Réduire la charge
+      wait: 1000,
+      actions: []
     });
 
+    console.log('✅ Pa11y analysis completed');
     await browser.close();
 
     const summary = normalize(results);
+    console.log(`✅ Audit completed - Score: ${summary.score}`);
+    
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url, ...summary }),
     };
   } catch (err) {
-    // si browser existe encore, tenter la fermeture
+    console.error('❌ Audit error:', err.message);
     try { 
       if (browser) await browser.close(); 
     } catch (closeErr) {
       console.error("Erreur lors de la fermeture du navigateur:", closeErr);
     }
-    return { statusCode: 500, body: `Audit error: ${err.message}` };
+    return { 
+      statusCode: 500, 
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ error: `Audit error: ${err.message}` })
+    };
   }
 };

@@ -3,5 +3,14 @@
   node_bundler = "esbuild"
   external_node_modules = ["pa11y", "puppeteer-core", "@sparticuz/chromium"]
 
+[functions."start-audit"]
+  # Timeout maximum pour Netlify Free = 10s, Pro = 26s
+  timeout = 10
+
 [build]
   publish = "."
+
+# Variables d'environnement pour optimiser Chromium
+[build.environment]
+  PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
+  CHROMIUM_PATH = "/opt/chromium"

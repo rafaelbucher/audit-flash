@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Production Quick</title>
+</head>
+<body>
+    <h1>Test Production API</h1>
+    <input type="text" id="netlifyUrl" placeholder="https://votre-site.netlify.app" style="width: 300px;">
+    <button onclick="testAPI()">Tester webflow-formation.fr</button>
+    <div id="result" style="white-space: pre-wrap; margin-top: 20px;"></div>
+
+    <script>
+        async function testAPI() {
+            const netlifyUrl = document.getElementById('netlifyUrl').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!netlifyUrl) {
+                resultDiv.textContent = 'Veuillez saisir l\'URL Netlify';
+                return;
+            }
+            
+            resultDiv.textContent = '⏳ Test en cours...';
+            
+            try {
+                const response = await fetch(`${netlifyUrl}/.netlify/functions/start-audit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: 'https://www.webflow-formation.fr/' })
+                });
+                
+                const result = await response.json();
+                resultDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                resultDiv.textContent = `❌ Erreur: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

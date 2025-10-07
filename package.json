@@ -6,7 +6,8 @@
     "dev": "netlify dev",
     "login": "netlify login",
     "init": "netlify init",
-    "deploy": "netlify deploy --prod"
+    "deploy": "netlify deploy --prod",
+    "test": "node test-function.js"
   },
   "dependencies": {
     "@sparticuz/chromium": "^141.0.0",
@@ -16,5 +17,8 @@
   "devDependencies": {
     "netlify-cli": "^17.0.0",
     "puppeteer": "^24.23.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
