@@ -7,6 +7,15 @@
   # Timeout maximum pour Netlify Free = 10s, Pro = 26s
   timeout = 10
 
+[functions."test-simple"]
+  timeout = 5
+
+[functions."test-progressive"]
+  timeout = 10
+
+[functions."audit-lightweight"]
+  timeout = 5
+
 [build]
   publish = "."
 
