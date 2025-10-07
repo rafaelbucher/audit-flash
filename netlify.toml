@@ -4,4 +4,4 @@
   external_node_modules = ["pa11y", "puppeteer-core", "@sparticuz/chromium"]
 
 [build]
-  publish = "dist"
+  publish = "."
