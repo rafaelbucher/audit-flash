@@ -7,6 +7,14 @@
   # Timeout maximum pour Netlify Free = 10s, Pro = 26s
   timeout = 10
 
+[functions."start-audit-production"]
+  # Configuration optimale pour Pa11y + Puppeteer
+  timeout = 10
+  memory = 1024
+
+[functions."start-audit-v2"]
+  timeout = 10
+
 [functions."test-simple"]
   timeout = 5
 
@@ -19,7 +27,11 @@
 [build]
   publish = "."
 
-# Variables d'environnement pour optimiser Chromium
+# Variables d'environnement optimisées pour Chromium en production
 [build.environment]
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true"
   CHROMIUM_PATH = "/opt/chromium"
+  # Optimisations mémoire
+  NODE_OPTIONS = "--max-old-space-size=1024"
+  # Cache Chromium
+  CHROMIUM_CACHE_DIR = "/tmp/.chrome"
