@@ -6,19 +6,41 @@ async function getPuppeteer() {
   if (process.env.NETLIFY === "true" && process.env.NETLIFY_LOCAL !== "true") {
     // En prod Netlify: puppeteer-core + chromium (binaire lambda)
     const puppeteer = await import("puppeteer-core");
+    const chromium = await import("@sparticuz/chromium");
     return {
       launch: async () =>
         await puppeteer.default.launch({
-          args: chromium.args,
-          defaultViewport: chromium.defaultViewport,
-          executablePath: await chromium.executablePath(),
-          headless: chromium.headless,
+          args: [
+            ...chromium.default.args,
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--single-process',
+            '--no-zygote'
+          ],
+          defaultViewport: chromium.default.defaultViewport,
+          executablePath: await chromium.default.executablePath(),
+          headless: chromium.default.headless,
         }),
     };
   } else {
-    // En local: puppeteer full
-    const puppeteer = await import("puppeteer");
-    return puppeteer.default;
+    // En local: puppeteer full (avec binaire inclus)
+    try {
+      const puppeteer = await import("puppeteer");
+      return puppeteer.default;
+    } catch (localError) {
+      console.warn('⚠️ Puppeteer local failed, trying fallback...', localError.message);
+      // Fallback: essayer avec puppeteer-core + chromium local
+      const puppeteer = await import("puppeteer-core");
+      return {
+        launch: async () =>
+          await puppeteer.default.launch({
+            headless: true,
+            args: ['--no-sandbox', '--disable-dev-shm-usage']
+          }),
+      };
+    }
   }
 }
 
