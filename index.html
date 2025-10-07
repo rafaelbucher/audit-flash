@@ -82,6 +82,16 @@
                 <label for="url">URL du site à analyser :</label>
                 <input type="url" id="url" name="url" required placeholder="https://exemple.com">
             </div>
+            
+            <div class="form-group">
+                <label for="auditType">Type d'audit :</label>
+                <select id="auditType" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    <option value="start-audit">🔍 Audit complet (Pa11y + Puppeteer)</option>
+                    <option value="start-audit-v2">⚡ Audit optimisé Netlify</option>
+                    <option value="audit-lightweight">🚀 Audit rapide (sans browser)</option>
+                </select>
+            </div>
+            
             <button type="submit">Lancer l'audit</button>
         </form>
 
@@ -93,15 +103,16 @@
             e.preventDefault();
             
             const url = document.getElementById('url').value;
+            const auditType = document.getElementById('auditType').value;
             const resultDiv = document.getElementById('result');
             
             // Afficher le loading
             resultDiv.style.display = 'block';
             resultDiv.className = 'loading';
-            resultDiv.innerHTML = '⏳ Analyse en cours...';
+            resultDiv.innerHTML = `⏳ Analyse en cours avec ${auditType}...`;
             
             try {
-                const response = await fetch('/.netlify/functions/start-audit', {
+                const response = await fetch(`/.netlify/functions/${auditType}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -121,6 +132,7 @@
                     <h3>✅ Audit terminé pour : ${result.url}</h3>
                     <p><strong>Score d'accessibilité :</strong> ${result.score}/100</p>
                     <p><strong>Standard :</strong> ${result.standard}</p>
+                    ${result.meta ? `<p><strong>Méthode :</strong> ${result.meta.method || result.meta.environment || auditType}</p>` : ''}
                     <div>
                         <p><strong>Résumé :</strong></p>
                         <ul>
@@ -148,6 +160,14 @@
                 resultDiv.innerHTML = `
                     <h3>❌ Erreur lors de l'audit</h3>
                     <p>${error.message}</p>
+                    <div style="margin-top: 15px;">
+                        <h4>💡 Solutions :</h4>
+                        <ul>
+                            <li>Essayez l'<strong>audit rapide</strong> (sans browser)</li>
+                            <li>Vérifiez que l'URL est accessible</li>
+                            <li>Testez avec une URL plus simple</li>
+                        </ul>
+                    </div>
                 `;
             }
         });
